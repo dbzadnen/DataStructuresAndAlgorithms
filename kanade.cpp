@@ -2,13 +2,15 @@
 #include<algorithm>
 #include<vector>
 using namespace std;
+typedef pair<int,int> pi;
+typedef pair<pi,pi> quad;
 
-vector<int> kanade(vector<int> &vec){
+int kadane(vector<int> &vec,int& besti,int& beste){
     // always locate maximum sum of size k till the suls becomes negative so it resets and then keep going
     int sum = 0,start = 0,best = 0 , startbs = 0 , endbs = 0,i_min = 0;
     // worst case where all are negatives , take neart abolute value to 0
     int min = (vec[0]);
-    for(int i = 0 ;i< vec.size();i++){
+    for(int i = 0 ;i< (int)vec.size();i++){
         sum += vec[i];
         if(abs(vec[i]) < abs(min)){
             min = vec[i];
@@ -23,7 +25,6 @@ vector<int> kanade(vector<int> &vec){
                     startbs = start;
                     endbs = i;
             }
-        
     }
     if(best == 0){
         best =  min ;
@@ -32,66 +33,131 @@ vector<int> kanade(vector<int> &vec){
             endbs = i_min;
         }
     }
-    
-    return {best,startbs,endbs};
-}
-int maxvol(pair< pair<int,int>,pair<int,int> > pi){
-   return (abs(pi.first.first - pi.first.second) +1) * (abs(pi.second.first - pi.second.second) +1);
-}
-int kanade2d(vector<vector<int>> &vec,int n,int h){
-    int best = 0;
-    pair< pair<int,int>,pair<int,int> > cord = {{0,0},{0,0}}, bestcord,localcord;
-    vector<int> runningsum(h,0),current(h,0);
-    for(int x =0;x < n;x++ ){
-        
-        for(int y = 0;y < h;y++){
-            runningsum[y] += vec[y][x];
-            current[y] = vec[y][x];
-        }
-        vector<int> result =  kanade(runningsum);
-
-        vector<int> result2 =  kanade(current);
-        localcord.second.first = x;
-        localcord.second.second = x;
-        localcord.first.first = result2[1];
-        localcord.first.second = result2[2];
-        if(result2[0]> result[0] || ( result[0]== result2[0] && maxvol(localcord) > maxvol(cord) )){
-            result= result2;
-            cord = localcord;
-        }
-        if(result[0] < 0){
-            cord.second.second = x+1;
-            cord.first = {0,0};
-            runningsum = vector<int>(h,0);
-        }else{
-            cord.second.first = x;
-            cord.first.first = result[1];
-            cord.first.second = result[2];
-        }
-        cout << "res : " << result[0] << endl << "cord : " << cord.second.second << " " << cord.second.first  ;   
-        cout <<  " "<< result[1] << " " << result[2] << endl;
-        if(result[0] >best || ( result[0]== best && maxvol(cord) > maxvol(bestcord) )){
-            bestcord = cord;
-            best = result[0];
-        } 
-         
-    }
-    cout <<" final ";
+    besti = startbs;
+    beste = endbs;
     return best;
 }
+int maxvol(quad pi){
+   return (abs(pi.first.first - pi.first.second) +1) * (abs(pi.second.first - pi.second.second) +1);
+}
+int compute(vector<vector<int>> &grid,vector<vector<int>> &cmsum,int start,int end,int& upper,int &lower,int h,int n){
+    vector<int> rect (h,0);
+    for(int y = 0;y < h;y++){
+        rect[y] = cmsum[y][end] - cmsum[y][start] + grid[y][start];
+    }
+    int result = kadane(rect,upper,lower);
+    return result;
+}
+/*int kadane2d(vector<vector<int>> &vec,int n,int h){
+    // Time Complexity : n*h + n²*h
+    vector<vector<int>> cumsum (h,vector<int>(n,0));
+    for(int x = 0;x < n;x++){
+        for(int y = 0;y < h;y++){
+            cumsum[y][x] = cumsum[y][max(x-1,0)] + vec[y][x];
+        }
+    }
+    quad localrect = {{0,0},{0,0}},bestrect = {{0,0},{0,0}};
+    int best = vec[0][0];
+    for(int globalend =1;globalend < n;globalend++ ){
+        localrect.second.first = globalend;
+        for(int globalstart =0;globalstart <= globalend;globalstart++ ){
+            localrect.second.second = globalstart;
+            int upper=0,bottom=0;
+            int result = compute(vec,cumsum,globalstart,globalend,upper,bottom,h,n);
+            localrect.first.first = bottom;
+            localrect.first.second = upper;
+            if(result > best || (result == best && maxvol(localrect) > maxvol(bestrect))){
+                best = result;
+                bestrect = localrect;
+            }
+        }
+    }
+    return best;
+}
+*/
+int eval(vector<vector<int>>& vec,vector<vector<int>> &cumsum,int mid,int &globalend,int &localbest,quad &localbestrect,quad &localrect,int h,int n){
+    localrect.second.second = mid;
+    int upper=0,bottom=0;
+    int result = compute(vec,cumsum,mid,globalend,upper,bottom,h,n);
+    localrect.first.first = bottom;
+    localrect.first.second = upper;
+    if(result > localbest || (result == localbest && maxvol(localrect) > maxvol(localbestrect))){
+        localbest = result;
+        localbestrect = localrect;
+        return 1;
+    }else {
+        return 0;
+    }
+}
+int kadane2d(vector<vector<int>> &vec,int n,int h,quad &fin){
 
+    // Time Complexity : n*h + h*n*log(n)
+    vector<vector<int>> cumsum (h,vector<int>(n,0));
+    for(int x = 0;x < n;x++){
+        for(int y = 0;y < h;y++){
+            cumsum[y][x] = cumsum[y][max(x-1,0)] + vec[y][x];
+        }
+    }
+    quad localrect = {{0,0},{0,0}},globalbestrect = {{0,0},{0,0}};
+    int globalbest = vec[0][0];
+    for(int globalend =0;globalend < n;globalend++ ){
+        //cout <<"current end is :" << globalend << endl;
+        //fixed end point
+        localrect.second.first = globalend;
+
+        //bs parameters of the left segment
+        int globalstart = 0;
+        int virtualend = globalend;
+        
+        int bestupper=0,bestbottom=0;
+        int localbest = compute(vec,cumsum,globalstart,globalend,bestupper,bestbottom,h,n);
+        quad localbestrect = {{bestbottom,bestupper},{globalend,globalstart}};
+        bool repeat = true;
+
+        while(globalstart <= virtualend){
+                        //if there are only 2 rows then get the max , if there is one take it otherwise binary search
+
+            int mid = (globalstart + (virtualend - globalstart) / 2);
+            if(virtualend - globalstart == 1){
+                eval(vec,cumsum,mid,globalend,localbest,localbestrect,localrect,h,n);
+                eval(vec,cumsum,mid+1,globalend,localbest,localbestrect,localrect,h,n);
+                break;
+            }else if(virtualend - globalstart == 0){
+                eval(vec,cumsum,mid,globalend,localbest,localbestrect,localrect,h,n);
+                break;
+            } else if(eval(vec,cumsum,mid,globalend,localbest,localbestrect,localrect,h,n) == 1){
+                globalstart = mid;
+            }else{
+                virtualend = mid;
+            }
+        }
+
+        if(localbest > globalbest || (localbest == globalbest && maxvol(localbestrect) > maxvol(globalbestrect))){
+            globalbest = localbest;
+            globalbestrect = localbestrect;
+        }
+
+    }
+    fin = globalbestrect;
+    return globalbest;
+}
 // a regler , l premier bs puis deux bs 
 int main(){
     vector<int> vec =  {-5,6,8,-2,0,8,-100,12};
-    vector<vector<int>> vec2d = {
-        {1,  2,-1,-4,-20},
-        {-8,-3, 4, 2, 1},
-        { 3, 8, 10,1, 3},
-        {-4,-1, 1, 7,-6}
-    };
-        //cout << kanade(vec)[0] << endl;
-
-    cout <<  " heeey " << kanade2d(vec2d,5,4) << endl;
+    //test kadane 1d with vec 
+    
+    /*vector<vector<int>> vec2d =  { { 1, 2, -1, -4, -20 },
+                        { -8, -3, 4, 2, 1 },
+                        { 3, 8, 10, 1, 3 },
+                        { -4, -1, 1, 7, -6 } };*/
+    vector<vector<int>> vec2d =  { { -7, 6, -6 },
+                        { -6, 1, -1 },
+                        { 1, 2, -7 } }; 
+              
+    quad cord;
+    int n = 3;
+    int result = kadane2d(vec2d,n,n,cord);
+    printf("(top,left) (%d,%d)\n(bottom,right) (%d,%d)\nMaximum sum : %d",cord.first.second,cord.second.second,cord.first.first,cord.second.first, result)   ; 
+    return 0;
     return 0;
 }
-
