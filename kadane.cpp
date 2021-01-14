@@ -48,7 +48,7 @@ int compute(vector<vector<int>> &grid,vector<vector<int>> &cmsum,int start,int e
     int result = kadane(rect,upper,lower);
     return result;
 }
-/*int kadane2d(vector<vector<int>> &vec,int n,int h){
+int kadane2dnonoptimized(vector<vector<int>> &vec,int n,int h){
     // Time Complexity : n*h + n²*h
     vector<vector<int>> cumsum (h,vector<int>(n,0));
     for(int x = 0;x < n;x++){
@@ -74,7 +74,7 @@ int compute(vector<vector<int>> &grid,vector<vector<int>> &cmsum,int start,int e
     }
     return best;
 }
-*/
+
 int eval(vector<vector<int>>& vec,vector<vector<int>> &cumsum,int start,int &end,int &localbest,quad &localbestrect,quad &localrect,int h,int n){
     localrect.second.second = start;
     int upper=0,bottom=0;
@@ -90,7 +90,7 @@ int eval(vector<vector<int>>& vec,vector<vector<int>> &cumsum,int start,int &end
         return 0;
     }
 }
-/*int kadane2d(vector<vector<int>> &vec,int n,int h,quad &fin){
+int kadane2d(vector<vector<int>> &vec,int n,int h,quad &fin){
 
     // Time Complexity : n*h + h*n*log(n)
     vector<vector<int>> cumsum (h,vector<int>(n,0));
@@ -141,7 +141,7 @@ int eval(vector<vector<int>>& vec,vector<vector<int>> &cumsum,int start,int &end
     }
     fin = globalbestrect;
     return globalbest;
-}*/
+}
 int kadane2dOptimal(vector<vector<int>> &vec,int n,int h,quad &fin){
 
     //Time complexity of :  n*h + h*(log(n)+log(n-k)) where k is the optimal left segment x position : upperbounded by (n*h) and lower bounded by (n*h) => asymptotcily n*h time complexity and also n*h space complexity  
